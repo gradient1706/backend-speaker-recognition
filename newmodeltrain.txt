@@ -1,3 +1,9 @@
-Abc/Abc_1.wav
-Abc/Abc_2.wav
-Abc/Abc_3.wav
+local/bin/usr/voice_recog/train_folder/12345678_teacher/DangHuuTien_3.wav
+local/bin/usr/voice_recog/train_folder/12345678_teacher/DangHuuTien_6.wav
+local/bin/usr/voice_recog/train_folder/12345678_teacher/NguyenDucAnh_3.wav
+local/bin/usr/voice_recog/train_folder/12345678_teacher/NguyenDucAnh_7.wav
+local/bin/usr/voice_recog/train_folder/12345678_teacher/NguyenThiPhuongDong_1.wav
+local/bin/usr/voice_recog/train_folder/12345678_teacher/NguyenThiPhuongDong_12.wav
+local/bin/usr/voice_recog/train_folder/12345678_teacher/NguyenThiPhuongDong_7.wav
+local/bin/usr/voice_recog/train_folder/12345678_teacher/NguyenThiPhuongDong_9.wav
+local/bin/usr/voice_recog/train_folder/12345678_teacher/NguyenVanManh_5.wav
