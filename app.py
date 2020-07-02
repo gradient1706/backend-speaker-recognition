@@ -22,7 +22,7 @@ from sklearn import mixture
 import sys
 # from pynput import keyboard
 # import sounddevice as sd
-import soundfile as sf
+# import soundfile as sf
 import time
 import os
 from scipy.io.wavfile import read
