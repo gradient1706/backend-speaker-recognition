@@ -16,13 +16,16 @@ from flask import Flask, render_template, request
 import mysql.connector
 import os
 from flask_mysqldb import MySQL
+import json
+from werkzeug.utils import secure_filename
+from flask import Response
 
 app = Flask(__name__)
 
 mydb = mysql.connector.connect(
   host="localhost",
   user="root",
-  password="root",
+  password="pageone1Q",
   database="speakerrecognition"
 )
 
@@ -61,8 +64,12 @@ def createTeacher():
   cur = mysql.connection.cursor()
   cur.execute("INSERT INTO user(client_id, userid, name, is_attending, is_host, train_folder, test_folder) VALUES (%s, %s,%s, %s,%s, %s,%s)", (client_id, userid, name, is_attending, is_host, train_folder, test_folder))
   mysql.connection.commit()
+
+  cur.execute( "SELECT * FROM user WHERE client_id = %s", [client_id] )
+  user = cur.fetchone()
   cur.close()
-  return 'Successfully create new teacher!'
+  result = json.dumps({"user": user})
+  return Response(result, status=201, mimetype='application/json')
 
 
 @app.route('/createStudent', methods=['POST'])
@@ -84,8 +91,13 @@ def createStudent():
   cur = mysql.connection.cursor()
   cur.execute("INSERT INTO user(client_id, userid, name, is_attending, is_host, train_folder, test_folder) VALUES (%s, %s,%s, %s,%s, %s,%s)", (client_id, userid, name, is_attending, is_host, train_folder, test_folder))
   mysql.connection.commit()
+  cur.execute( "SELECT * FROM user WHERE client_id = %s", [client_id] )
+  user = cur.fetchone()
+  print(user)
   cur.close()
-  return 'Successfully create new student!'
+  #return 'Successfully create new student!'
+  result = json.dumps({"user": user})
+  return Response(result, status=201, mimetype='application/json')
 
 @app.route('/studentAttendRoom', methods=['POST'])
 def studentAttendRoom():
@@ -99,22 +111,23 @@ def studentAttendRoom():
   cur.execute( "SELECT client_id, host_id  FROM host_user WHERE client_id LIKE %s and host_id LIKE %s", [client_id, host_id] )
   ver = cur.fetchone()
   if ver is not None:
-    return "User alreadly attend room"
+    return Response("User alreadly attend room", status=400, mimetype='application/json')
 
   cur.execute( "SELECT * FROM host  WHERE  host_id LIKE %s", [ host_id] )
   ver = cur.fetchone()
   if ver is None:
-    return "Invalid host_id"
+    return Response("Invalid host_id", status=400, mimetype='application/json')
 
   cur.execute( "SELECT * FROM user  WHERE  client_id LIKE %s", [ client_id] )
   ver = cur.fetchone()
   if ver is None:
-    return "Invalid client_id"
+    return Response("Invalid client_id", status=400, mimetype='application/json')
 
   cur.execute("INSERT INTO host_user(host_id, client_id) VALUES (%s,%s)", (host_id, client_id))
   mysql.connection.commit()
   cur.close()
-  return 'Successfully attend room!'
+  #return 'Successfully attend room!'
+  return Response('Successfully attend room!', status=200, mimetype='application/json')
 
 
 @app.route('/teacherCreateRoom', methods=['POST'])
@@ -140,12 +153,78 @@ def teacherCreateRoom():
     host_id = cur.lastrowid
     cur.execute("INSERT INTO host_user(host_id, client_id) VALUES (%s,%s)", (host_id, client_id))
     mysql.connection.commit()
+    cur.execute( "SELECT * FROM host WHERE host_id = %s", [host_id] )
+    host = cur.fetchone()
     cur.close()
-    return 'Successfully create new room!'
+    #return 'Successfully create new room!'
+    #return Response(host, status=201, mimetype='application/json')
+    result = json.dumps({"host": host})
+    return Response(result, status=201, mimetype='application/json')
   
-  return "Just teacher can create new room!"
+  #return "Just teacher can create new room!"
+  return Response("Just teacher can create new room!", status=400, mimetype='application/json')
 
 
+@app.route('/userInRoom', methods=['GET'])
+def userInRoom():
+  host_id = request.args.get('host_id')
+  cur = mysql.connection.cursor()
+
+  cur.execute( "SELECT client_id FROM host_user WHERE host_id = %s", [host_id] )
+  data = cur.fetchall()
+  user_list = []
+  for row in data:
+    cur.execute( "SELECT * FROM user WHERE client_id = %s AND is_attending = 1", [row[0]] )
+    user = cur.fetchone()
+    if user is not None:
+      user_list.append(user)
+  #result = json.dumps(user_list)
+  result = json.dumps({"list_user": user_list})
+  return Response(result, status=200, mimetype='application/json')
+
+
+@app.route('/userOfRoom', methods=['GET'])
+def userOfRoom():
+  host_id = request.args.get('host_id')
+  cur = mysql.connection.cursor()
+
+  cur.execute( "SELECT client_id FROM host_user WHERE host_id = %s", [host_id] )
+  data = cur.fetchall()
+  user_list = []
+  for row in data:
+    cur.execute( "SELECT * FROM user WHERE client_id = %s", [row[0]] )
+    user = cur.fetchone()
+    if user is not None:
+      user_list.append(user)
+  result = json.dumps({"list_user": user_list})
+  return Response(result, status=200, mimetype='application/json')
+
+
+@app.route('/uploadTrainFile', methods = [ 'POST'])
+def upload_train_file():
+  client_id = request.args.get('client_id')
+  cur = mysql.connection.cursor()
+  cur.execute( "SELECT train_folder FROM user WHERE client_id = %s", [client_id] )
+  user = cur.fetchone()
+  trainFolder = user[0]
+  f = request.files['trainfile']
+  f.save(os.path.join(trainFolder, secure_filename(f.filename)))
+  
+  #return 'file uploaded successfully'
+  return Response('file uploaded successfully', status=201, mimetype='application/json')
+
+
+@app.route('/uploadTestFile', methods = [ 'POST'])
+def upload_test_file():
+  client_id = request.args.get('client_id')
+  cur = mysql.connection.cursor()
+  cur.execute( "SELECT test_folder FROM user WHERE client_id = %s", [client_id] )
+  user = cur.fetchone()
+  testFolder = user[0]
+  f = request.files['testfile']
+  f.save(os.path.join(testFolder, secure_filename(f.filename)))
+  
+  return Response('file uploaded successfully', status=201, mimetype='application/json')
 
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0')
