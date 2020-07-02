@@ -14,7 +14,7 @@ from featureextraction import extract_features
 import nltk
 #nltk.download('punkt')
 import nltk.data
-import pyaudio
+# import pyaudio
 import wave
 import pickle
 import numpy as np
@@ -352,4 +352,4 @@ def rollRoom():
   return Response(speakers[winner], status=400, mimetype='application/json')
 
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0')
+    app.run(debug=False,host='0.0.0.0')
