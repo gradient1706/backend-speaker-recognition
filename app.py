@@ -20,7 +20,7 @@ import pickle
 import numpy as np
 from sklearn import mixture
 import sys
-from pynput import keyboard
+# from pynput import keyboard
 import sounddevice as sd
 import soundfile as sf
 import time
