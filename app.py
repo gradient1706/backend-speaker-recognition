@@ -38,8 +38,8 @@ mydb = mysql.connector.connect(
 
 mycursor = mydb.cursor()
 
-# database = MySQLdb.connect(host = "localhost", user = "root", passwd = "pageone1Q", db = "speakerrecognition", cursorclass=MySQLdb.cursors.DictCursor)
-# c = database.cursor()
+database = MySQLdb.connect(host = "us-cdbr-east-02.cleardb.com", user = "bc230c0c0a241d", passwd = "456abe01", db = "heroku_768243426c2ce6a", cursorclass=MySQLdb.cursors.DictCursor)
+c = mydb.cursor()
 
 # mycursor.execute("CREATE TABLE host (host_id INT AUTO_INCREMENT PRIMARY KEY, host_name VARCHAR(255))")
 
