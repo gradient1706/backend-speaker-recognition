@@ -3,15 +3,15 @@ from featureextraction import extract_features
 import nltk
 #nltk.download('punkt')
 import nltk.data
-import pyaudio
+# import pyaudio
 import wave
 import pickle
 import numpy as np
 from sklearn import mixture
 import sys
-from pynput import keyboard
-import sounddevice as sd
-import soundfile as sf
+# from pynput import keyboard
+# import sounddevice as sd
+# import soundfile as sf
 import time
 import os
 from scipy.io.wavfile import read
@@ -29,11 +29,11 @@ import MySQLdb.cursors
 app = Flask(__name__)
 
 mydb = mysql.connector.connect(
-  host="localhost",
-  user="root",
-  password="pageone1Q",
-  database="speakerrecognition",
-  auth_plugin='mysql_native_password'
+  host="us-cdbr-east-02.cleardb.com",
+  user="bc230c0c0a241d",
+  password="456abe01",
+  database="heroku_768243426c2ce6a",
+  # auth_plugin='mysql_native_password'
 )
 
 mycursor = mydb.cursor()
@@ -359,4 +359,4 @@ def rollRoom():
   return Response(speakers[winner], status=400, mimetype='application/json')
 
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0')
+    app.run(debug=False,host='0.0.0.0')
