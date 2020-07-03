@@ -79,7 +79,7 @@ def createTeacher():
   user = c.fetchone()
   #c.close()
   result = json.dumps({"user": user})
-  return Response(result, status=201, mimetype='application/json')
+  return result
 
 
 @app.route('/createStudent', methods=['POST'])
@@ -107,7 +107,7 @@ def createStudent():
   #c.close()
   #return 'Successfully create new student!'
   result = json.dumps({"user": user})
-  return Response(result, status=201, mimetype='application/json')
+  return result
 
 @app.route('/studentAttendRoom', methods=['POST'])
 def studentAttendRoom():
@@ -138,7 +138,7 @@ def studentAttendRoom():
   #mysql.connection.commit()
   #c.close()
   #return 'Successfully attend room!'
-  return Response('Successfully attend room!', status=200, mimetype='application/json')
+  return 'Successfully attend room!'
 
 
 @app.route('/teacherCreateRoom', methods=['POST'])
@@ -175,10 +175,10 @@ def teacherCreateRoom():
     #return 'Successfully create new room!'
     #return Response(host, status=201, mimetype='application/json')
     result = json.dumps({"host": host})
-    return Response(result, status=201, mimetype='application/json')
+    return result
   
   #return "Just teacher can create new room!"
-  return Response("Just teacher can create new room!", status=400, mimetype='application/json')
+  return "Just teacher can create new room!"
 
 
 @app.route('/userInRoom', methods=['GET'])
@@ -198,7 +198,7 @@ def userInRoom():
       user_list.append(user)
   #result = json.dumps(user_list)
   result = json.dumps({"list_user": user_list})
-  return Response(result, status=200, mimetype='application/json')
+  return result
 
 
 @app.route('/userOfRoom', methods=['GET'])
@@ -215,7 +215,7 @@ def userOfRoom():
     if user is not None:
       user_list.append(user)
   result = json.dumps({"list_user": user_list})
-  return Response(result, status=200, mimetype='application/json')
+  return result
 
 
 @app.route('/uploadTrainFile', methods = [ 'POST'])
@@ -244,7 +244,7 @@ def upload_test_file():
   # train_file = "newmodeltest.txt" 
   # fileopen = open(train_file, 'w+')
   # fileopen.write(os.path.join(testFolder, secure_filename(f.filename)))
-  return Response('file uploaded successfully', status=201, mimetype='application/json')
+  return 'file uploaded successfully'
 
 @app.route('/buildModel', methods = [ 'GET'])
 def buildModel():
@@ -299,7 +299,7 @@ def buildModel():
   features = np.asarray(())
     
 
-  return Response('Build model successfully', status=201, mimetype='application/json')
+  return 'Build model successfully'
 
 @app.route('/rollRoom', methods = [ 'POST'])
 def rollRoom():
