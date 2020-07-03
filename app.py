@@ -78,7 +78,7 @@ def createTeacher():
   c.execute( "SELECT * FROM user WHERE client_id = %s", [client_id] )
   user = c.fetchone()
   #c.close()
-  result = json.dumps({"user": user})
+  result = json.dumps({"user": user}).encode('utf-8')
   return result
 
 
@@ -106,7 +106,7 @@ def createStudent():
   print(user)
   #c.close()
   #return 'Successfully create new student!'
-  result = json.dumps({"user": user})
+  result = json.dumps({"user": user}).encode('utf-8')
   return result
 
 @app.route('/studentAttendRoom', methods=['POST'])
