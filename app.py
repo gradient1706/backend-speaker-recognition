@@ -1,14 +1,3 @@
-# from flask import Flask, render_template, request
-
-# app = Flask(__name__)
-
-# @app.route('/', methods=['GET', 'POST'])
-# def hello():
-#     return 'Hello! Welcome to Backend Speaker Recognition'
-    
-
-# if __name__ == '__main__':
-#     app.run(debug=True,host='0.0.0.0')
 
 from featureextraction import extract_features
 import nltk
@@ -35,7 +24,8 @@ from flask_mysqldb import MySQL
 import json
 from werkzeug.utils import secure_filename
 from flask import Response
-
+import MySQLdb
+import MySQLdb.cursors
 app = Flask(__name__)
 
 mydb = mysql.connector.connect(
@@ -48,18 +38,21 @@ mydb = mysql.connector.connect(
 
 mycursor = mydb.cursor()
 
-mycursor.execute("CREATE TABLE host (host_id INT AUTO_INCREMENT PRIMARY KEY, host_name VARCHAR(255))")
+database = MySQLdb.connect(host = "localhost", user = "root", passwd = "pageone1Q", db = "speakerrecognition", cursorclass=MySQLdb.cursors.DictCursor)
+c = database.cursor()
 
-mycursor.execute("CREATE TABLE user (client_id VARCHAR(255) PRIMARY KEY,userid INT, name VARCHAR(255), is_attending BOOLEAN, is_host BOOLEAN, train_folder VARCHAR(255), test_folder VARCHAR(255) )")
+# mycursor.execute("CREATE TABLE host (host_id INT AUTO_INCREMENT PRIMARY KEY, host_name VARCHAR(255))")
 
-mycursor.execute("CREATE TABLE host_user (host_user_id  INT AUTO_INCREMENT PRIMARY KEY, host_id INT, client_id VARCHAR(255) , FOREIGN KEY (host_id) REFERENCES host (host_id) ON DELETE CASCADE  ON UPDATE CASCADE, FOREIGN KEY (client_id) REFERENCES user (client_id) ON DELETE CASCADE  ON UPDATE CASCADE,is_attending BOOLEAN)")
+# mycursor.execute("CREATE TABLE user (client_id VARCHAR(255) PRIMARY KEY,userid INT, name VARCHAR(255),  is_host BOOLEAN, train_folder VARCHAR(255), test_folder VARCHAR(255) )")
 
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'pageone1Q'
-app.config['MYSQL_DB'] = 'speakerrecognition'
+# mycursor.execute("CREATE TABLE host_user (host_user_id  INT AUTO_INCREMENT PRIMARY KEY, host_id INT, client_id VARCHAR(255) , FOREIGN KEY (host_id) REFERENCES host (host_id) ON DELETE CASCADE  ON UPDATE CASCADE, FOREIGN KEY (client_id) REFERENCES user (client_id) ON DELETE CASCADE  ON UPDATE CASCADE,is_attending BOOLEAN)")
 
-mysql = MySQL(app)
+# app.config['MYSQL_HOST'] = 'localhost'
+# app.config['MYSQL_USER'] = 'root'
+# app.config['MYSQL_PASSWORD'] = 'pageone1Q'
+# app.config['MYSQL_DB'] = 'speakerrecognition'
+
+# mysql = MySQL(app)
 
 
 @app.route('/createTeacher', methods=['POST'])
@@ -78,13 +71,13 @@ def createTeacher():
   if not os.path.exists(test_folder):
     os.makedirs(test_folder)
 
-  cur = mysql.connection.cursor()
-  cur.execute("INSERT INTO user(client_id, userid, name,  is_host, train_folder, test_folder) VALUES (%s, %s,%s, %s, %s,%s)", (client_id, userid, name, is_host, train_folder, test_folder))
-  mysql.connection.commit()
-
-  cur.execute( "SELECT * FROM user WHERE client_id = %s", [client_id] )
-  user = cur.fetchone()
-  cur.close()
+  #cur = mysql.connection.cursor()
+  c.execute("INSERT INTO user(client_id, userid, name,  is_host, train_folder, test_folder) VALUES (%s, %s,%s, %s, %s,%s)", (client_id, userid, name, is_host, train_folder, test_folder))
+  #mysql.connection.commit()
+  database.commit()
+  c.execute( "SELECT * FROM user WHERE client_id = %s", [client_id] )
+  user = c.fetchone()
+  #c.close()
   result = json.dumps({"user": user})
   return Response(result, status=201, mimetype='application/json')
 
@@ -104,13 +97,14 @@ def createStudent():
   if not os.path.exists(test_folder):
     os.makedirs(test_folder)
 
-  cur = mysql.connection.cursor()
-  cur.execute("INSERT INTO user(client_id, userid, name, is_host, train_folder, test_folder) VALUES (%s, %s, %s,%s, %s,%s)", (client_id, userid, name, is_host, train_folder, test_folder))
-  mysql.connection.commit()
-  cur.execute( "SELECT * FROM user WHERE client_id = %s", [client_id] )
-  user = cur.fetchone()
+  #cur = mysql.connection.cursor()
+  c.execute("INSERT INTO user(client_id, userid, name, is_host, train_folder, test_folder) VALUES (%s, %s, %s,%s, %s,%s)", (client_id, userid, name, is_host, train_folder, test_folder))
+  #mysql.connection.commit()
+  database.commit()
+  c.execute( "SELECT * FROM user WHERE client_id = %s", [client_id] )
+  user = c.fetchone()
   print(user)
-  cur.close()
+  #c.close()
   #return 'Successfully create new student!'
   result = json.dumps({"user": user})
   return Response(result, status=201, mimetype='application/json')
@@ -123,25 +117,26 @@ def studentAttendRoom():
   host_id = content['host_id']
   print("HOSTID"+ str(host_id))
 
-  cur = mysql.connection.cursor()
-  cur.execute( "SELECT client_id, host_id  FROM host_user WHERE client_id LIKE %s and host_id LIKE %s", [client_id, host_id] )
-  ver = cur.fetchone()
+  #cur = mysql.connection.cursor()
+  c.execute( "SELECT client_id, host_id  FROM host_user WHERE client_id LIKE %s and host_id LIKE %s", [client_id, host_id] )
+  ver = c.fetchone()
   if ver is not None:
     return Response("User alreadly attend room", status=400, mimetype='application/json')
 
-  cur.execute( "SELECT * FROM host  WHERE  host_id LIKE %s", [ host_id] )
-  ver = cur.fetchone()
+  c.execute( "SELECT * FROM host  WHERE  host_id LIKE %s", [ host_id] )
+  ver = c.fetchone()
   if ver is None:
     return Response("Invalid host_id", status=400, mimetype='application/json')
 
-  cur.execute( "SELECT * FROM user  WHERE  client_id LIKE %s", [ client_id] )
-  ver = cur.fetchone()
+  c.execute( "SELECT * FROM user  WHERE  client_id LIKE %s", [ client_id] )
+  ver = c.fetchone()
   if ver is None:
     return Response("Invalid client_id", status=400, mimetype='application/json')
 
-  cur.execute("INSERT INTO host_user(host_id, client_id) VALUES (%s,%s)", (host_id, client_id))
-  mysql.connection.commit()
-  cur.close()
+  c.execute("INSERT INTO host_user(host_id, client_id) VALUES (%s,%s)", (host_id, client_id))
+  database.commit()
+  #mysql.connection.commit()
+  #c.close()
   #return 'Successfully attend room!'
   return Response('Successfully attend room!', status=200, mimetype='application/json')
 
@@ -149,29 +144,34 @@ def studentAttendRoom():
 @app.route('/teacherCreateRoom', methods=['POST'])
 def teacherCreateRoom():
   content = request.json
-  client_id = request.args.get('client_id')
+  client_id = content['client_id']
   
   host_name = content['host_name']
-  cur = mysql.connection.cursor()
-
-  cur.execute( "SELECT client_id, is_host  FROM user WHERE client_id LIKE %s", [client_id] )
-  ver = cur.fetchone()
-
-  if ver[1] == 1:
+  #cur = mysql.connection.cursor()
+  print("client")
+  print(client_id)
+  print("hhost")
+  print(host_name)
+  c.execute( "SELECT client_id, is_host  FROM user WHERE client_id LIKE %s", [client_id] )
+  ver = c.fetchone()
+  print("VER")
+  print(ver)
+  if ver['is_host'] == True:
 
 
     print("CLIENTID"+client_id)
     print("HOSTNAMe"+ host_name)
     #cur.execute("INSERT INTO host(host_id, host_name) VALUES (%s,%s)", (NULL, host_name))
-    cur.execute("insert into host(host_name) values(%s)", [host_name])
-
-    mysql.connection.commit()
-    host_id = cur.lastrowid
-    cur.execute("INSERT INTO host_user(host_id, client_id) VALUES (%s,%s)", (host_id, client_id))
-    mysql.connection.commit()
-    cur.execute( "SELECT * FROM host WHERE host_id = %s", [host_id] )
-    host = cur.fetchone()
-    cur.close()
+    c.execute("insert into host(host_name) values(%s)", [host_name])
+    database.commit()
+    #mysql.connection.commit()
+    host_id = c.lastrowid
+    c.execute("INSERT INTO host_user(host_id, client_id) VALUES (%s,%s)", (host_id, client_id))
+    #mysql.connection.commit()
+    database.commit()
+    c.execute( "SELECT * FROM host WHERE host_id = %s", [host_id] )
+    host = c.fetchone()
+    #c.close()
     #return 'Successfully create new room!'
     #return Response(host, status=201, mimetype='application/json')
     result = json.dumps({"host": host})
@@ -184,14 +184,16 @@ def teacherCreateRoom():
 @app.route('/userInRoom', methods=['GET'])
 def userInRoom():
   host_id = request.args.get('host_id')
-  cur = mysql.connection.cursor()
 
-  cur.execute( "SELECT client_id FROM host_user WHERE host_id = %s  AND is_attending = 1", [host_id] )
-  data = cur.fetchall()
+  c.execute( "SELECT client_id FROM host_user WHERE host_id = %s  AND is_attending = 1", [host_id] )
+  data = c.fetchall()
   user_list = []
   for row in data:
-    cur.execute( "SELECT * FROM user WHERE client_id = %s", [row[0]] )
-    user = cur.fetchone()
+    c.execute( "SELECT * FROM user WHERE client_id = %s", [row['client_id']] )
+    
+    user = c.fetchone()
+    print("USER")
+    print(user)
     if user is not None:
       user_list.append(user)
   #result = json.dumps(user_list)
@@ -202,14 +204,14 @@ def userInRoom():
 @app.route('/userOfRoom', methods=['GET'])
 def userOfRoom():
   host_id = request.args.get('host_id')
-  cur = mysql.connection.cursor()
+  #cur = mysql.connection.cursor()
 
-  cur.execute( "SELECT client_id FROM host_user WHERE host_id = %s", [host_id] )
-  data = cur.fetchall()
+  c.execute( "SELECT client_id FROM host_user WHERE host_id = %s", [host_id] )
+  data = c.fetchall()
   user_list = []
   for row in data:
-    cur.execute( "SELECT * FROM user WHERE client_id = %s", [row[0]] )
-    user = cur.fetchone()
+    c.execute( "SELECT * FROM user WHERE client_id = %s", [row['client_id']] )
+    user = c.fetchone()
     if user is not None:
       user_list.append(user)
   result = json.dumps({"list_user": user_list})
@@ -219,10 +221,10 @@ def userOfRoom():
 @app.route('/uploadTrainFile', methods = [ 'POST'])
 def upload_train_file():
   client_id = request.args.get('client_id')
-  cur = mysql.connection.cursor()
-  cur.execute( "SELECT train_folder FROM user WHERE client_id = %s", [client_id] )
-  user = cur.fetchone()
-  trainFolder = user[0]
+  #cur = mysql.connection.cursor()
+  c.execute( "SELECT train_folder FROM user WHERE client_id = %s", [client_id] )
+  user = c.fetchone()
+  trainFolder = user['train_folder']
   f = request.files['trainfile']
   f.save(os.path.join(trainFolder, secure_filename(f.filename)))
   
@@ -233,10 +235,10 @@ def upload_train_file():
 @app.route('/uploadTestFile', methods = [ 'POST'])
 def upload_test_file():
   client_id = request.args.get('client_id')
-  cur = mysql.connection.cursor()
-  cur.execute( "SELECT test_folder FROM user WHERE client_id = %s", [client_id] )
-  user = cur.fetchone()
-  testFolder = user[0]
+  #cur = mysql.connection.cursor()
+  c.execute( "SELECT test_folder FROM user WHERE client_id = %s", [client_id] )
+  user = c.fetchone()
+  testFolder = user['test_folder']
   f = request.files['testfile']
   f.save(os.path.join(testFolder, secure_filename(f.filename)))
   # train_file = "newmodeltest.txt" 
@@ -247,10 +249,10 @@ def upload_test_file():
 @app.route('/buildModel', methods = [ 'GET'])
 def buildModel():
   client_id = request.args.get('client_id')
-  cur = mysql.connection.cursor()
-  cur.execute( "SELECT train_folder FROM user WHERE client_id = %s", [client_id] )
-  user = cur.fetchone()
-  trainFolder = user[0]
+  #cur = mysql.connection.cursor()
+  c.execute( "SELECT train_folder FROM user WHERE client_id = %s", [client_id] )
+  user = c.fetchone()
+  trainFolder = user['train_folder']
   print("Train folder")
   print(trainFolder)
   train_file = "newmodeltrain.txt" 
@@ -280,8 +282,11 @@ def buildModel():
     else:
       features = np.vstack((features, vector))
   
+  file_paths.close()
   print("Feature")
   print(features)
+  open(train_file, 'w').close()
+
   gmm = mixture.GaussianMixture(n_components = 9, max_iter = 200, covariance_type='diag',n_init = 3)
   gmm.fit(features)
   
@@ -294,21 +299,22 @@ def buildModel():
   features = np.asarray(())
     
 
-
-
-
-
   return Response('Build model successfully', status=201, mimetype='application/json')
 
 @app.route('/rollRoom', methods = [ 'POST'])
 def rollRoom():
   host_id = request.args.get('host_id')
   client_id = request.args.get('client_id')
-  cur = mysql.connection.cursor()
-  cur.execute( "SELECT test_folder FROM user WHERE client_id = %s", [client_id] )
-  user = cur.fetchone()
-  testFolder = user[0]
-  
+  print("HOSTID")
+  print(host_id)
+  print("cLIENTID")
+  print(client_id)
+  #cur = mysql.connection.cursor()
+  c.execute( "SELECT test_folder FROM user WHERE client_id = %s", [client_id] )
+  user = c.fetchone()
+  testFolder = user['test_folder']
+  print("TEST FOLDER ")
+  print(testFolder)
   modelpath = "Speakers_models/"
   gmm_files = [os.path.join(modelpath,fname) for fname in  os.listdir(modelpath) if fname.endswith('.gmm')]
 
@@ -347,8 +353,9 @@ def rollRoom():
     mycursor.execute(sql, val)
 
     mydb.commit()
+    os.remove(path)
     return Response(speakers[winner], status=200, mimetype='application/json')
-
+  os.remove(path)
   return Response(speakers[winner], status=400, mimetype='application/json')
 
 if __name__ == '__main__':
